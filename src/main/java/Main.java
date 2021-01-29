@@ -1,4 +1,7 @@
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.poi.xwpf.usermodel.XWPFDocument;
+import org.apache.poi.xwpf.usermodel.XWPFParagraph;
+import org.apache.poi.xwpf.usermodel.XWPFRun;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
@@ -7,36 +10,52 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.*;
 import java.util.List;
-import java.util.Random;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import org.apache.poi.xwpf.usermodel.XWPFDocument;
-import org.apache.poi.xwpf.usermodel.XWPFParagraph;
-import org.apache.poi.xwpf.usermodel.XWPFRun;
 
 public class Main {
 
     public static void main(String[] args) throws AWTException, InterruptedException {
         File folder = null;
         try {
-            
+
 //            folder = ImageIO.read(new File("C:/Users/bartl/Documents/angelika/Leczenie_żywieniowe_Pierzak/"));
             XWPFDocument document = new XWPFDocument();
-            FileOutputStream out = new FileOutputStream("test.docx");
-            folder = new File("C:/Users/bartl/Documents/angelika/Leczenie_żywieniowe_Pierzak/");
+            FileOutputStream out = new FileOutputStream("C:/Users/bartl/Documents/angelika/28.01.2021/teleduperele/teleduperele2.docx");
+            folder = new File("C:/Users/bartl/Documents/angelika/teleduperele/imgs/");
             File[] listOfFiles = folder.listFiles();
+            long startTime = System.currentTimeMillis();
+
             if (listOfFiles != null) {
-                for (File file: listOfFiles) {
+                for (File file : listOfFiles) {
                     BufferedImage image = ImageIO.read(file);
-                    String imgText = ScreenshotTextReader.getImgText(image);
+                    BufferedImage blackAndWhite = makeImgBlackAndWhite(image);
+                    System.out.println("Processing slide number : " + file.getName());
+
+//                    String imgText = ScreenshotTextReader.getImgText(image);
+                    String blackAndWhiteText = ScreenshotTextReader.getImgText(blackAndWhite);
                     XWPFParagraph paragraph = document.createParagraph();
                     XWPFRun run = paragraph.createRun();
-                    run.setText(imgText);
+                    run.setText(blackAndWhiteText);
+//                    } else {
+//                        BufferedImage croppedImage = image.getSubimage(100, 75, 900, 525);
+//                        String imgText = ScreenshotTextReader.getImgText(croppedImage);
+//                        XWPFParagraph paragraph = document.createParagraph();
+//                        XWPFRun run = paragraph.createRun();
+//                        run.setText(imgText);
+//                    }
                 }
             }
             document.write(out);
             out.close();
+            long stopTime = System.currentTimeMillis();
+            System.out.println("Total time: " + String.format("%d min, %d sec",
+                    TimeUnit.MILLISECONDS.toMinutes(stopTime - startTime),
+                    TimeUnit.MILLISECONDS.toSeconds(stopTime) -
+                            TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(stopTime))));
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -78,6 +97,13 @@ public class Main {
 //            }
 //        }
 
+    }
+
+    private static BufferedImage makeImgBlackAndWhite(BufferedImage image) {
+        BufferedImage blackAndWhite = new BufferedImage(image.getWidth(), image.getHeight(), BufferedImage.TYPE_BYTE_BINARY);
+        Graphics2D g2d = blackAndWhite.createGraphics();
+        g2d.drawImage(image, 0, 0, null);
+        return blackAndWhite;
     }
 
     private static void performRandomThrow(Robot robot) throws InterruptedException {
@@ -131,7 +157,7 @@ public class Main {
         String[] split = imgText.split("\n");
         List<String> next_throw = Stream.of(split)
                 .filter(s -> s.contains("next throw") || s.contains("aren't training")
-                || s.contains("don't need to rest"))
+                        || s.contains("don't need to rest"))
                 .collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(next_throw)) {
             return next_throw.get(next_throw.size() - 1);

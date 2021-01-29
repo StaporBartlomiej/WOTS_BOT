@@ -9,7 +9,7 @@ class ScreenshotTextReader {
 
     static {
         INSTANCE.setDatapath("C:/Users/bartl/IdeaProjects/wots/tessdata");
-        INSTANCE.setLanguage("eng");
+        INSTANCE.setLanguage("pol");
     }
 
     static String getImgText(BufferedImage bufferedImage) {
